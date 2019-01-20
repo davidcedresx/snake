@@ -22,7 +22,7 @@ public:
 	bool step();
 	bool moveSnake(unsigned x, unsigned y);
 
-	void draw(sf::RenderWindow & window);
+	void draw(sf::RenderWindow & window, sf::Font & font);
 
 private:
 	void makeFruit();

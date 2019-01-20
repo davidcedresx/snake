@@ -1,6 +1,7 @@
 # include <game.hpp>
 # include <color.hpp>
 # include <cstdlib>
+# include <string>
 
 Game::Game() :
 	m_lives(3),
@@ -29,13 +30,13 @@ bool Game::step()
 
 	auto wrongMove = [] (Direction a, Direction b)
 	{
-		return a == Direction::Up and b == Direction::Down 
-			or a == Direction::Down and b == Direction::Up
-			or a == Direction::Left and b == Direction::Right
-			or a == Direction::Right and b == Direction::Left;
+		return (a == Direction::Up and b == Direction::Down)
+			or (a == Direction::Down and b == Direction::Up)
+			or (a == Direction::Left and b == Direction::Right)
+			or (a == Direction::Right and b == Direction::Left);
 	};
 
-	Direction new_direction = readDirectionFromKeyboard();
+	auto new_direction = readDirectionFromKeyboard();
 	if (new_direction == Direction::None or wrongMove(new_direction, m_direction))
 		new_direction = m_direction;
 
@@ -72,30 +73,48 @@ bool Game::moveSnake(unsigned x, unsigned y)
 	switch(m_board[y*32+x])
 	{
 		case Slot::Body:
-		reset();
+		{
+			if (m_lives == 0)
+			{
+				std::clog << clr::red << "game over \n";
+				throw -1;
+			}
+
+			--m_lives;
+			std::clog << clr::red << "life lost \n";
+
+			m_snake.emplace_back(x, y);
+			m_board[y*32+x] = Slot::Body;
+
+			auto back = m_snake.front();
+			m_board[std::get<1>(back)*32 + std::get<0>(back)] = Slot::Empty;
+			m_snake.erase(m_snake.begin());
+		}
 		break;
 
 		case Slot::Fruit:
 		m_snake.emplace_back(x, y);
 		m_board[y*32+x] = Slot::Body;
 		makeFruit();
-		m_score += 10;
+		m_score += 1;
 		return true;
 		break;
 
 		case Slot::Empty:
-		m_snake.emplace_back(x, y);
-		m_board[y*32+x] = Slot::Body;
+		{
+			m_snake.emplace_back(x, y);
+			m_board[y*32+x] = Slot::Body;
 
-		auto back = m_snake.front();
-		m_board[std::get<1>(back)*32 + std::get<0>(back)] = Slot::Empty;
-		m_snake.erase(m_snake.begin());
+			auto back = m_snake.front();
+			m_board[std::get<1>(back)*32 + std::get<0>(back)] = Slot::Empty;
+			m_snake.erase(m_snake.begin());
+		}
 		break;
 	}
 	return false;
 }
 
-void Game::draw(sf::RenderWindow & window)
+void Game::draw(sf::RenderWindow & window, sf::Font & font)
 {
 	for (unsigned row = 0; row < 32; ++row)
 		for (unsigned col = 0; col < 32; ++col)
@@ -120,6 +139,18 @@ void Game::draw(sf::RenderWindow & window)
 			rectangle.setPosition(col*20, row*20);
 			window.draw(rectangle);
 		}
+
+	sf::Text text;
+	text.setCharacterSize(14);
+	text.setFont(font);
+	text.setPosition(4, 4);
+
+	text.setString(std::to_string(m_score) + " points");
+	window.draw(text);
+
+	text.move(0, 18);
+	text.setString(std::to_string(m_lives) + " lives");
+	window.draw(text);
 }
 
 void Game::makeFruit()
@@ -134,6 +165,7 @@ void Game::makeFruit()
 		{
 			slot = Slot::Fruit;
 			set = true;
+			std::clog << clr::green << "fruit appeared at (" << x << ", " << y << ")\n";
 		}
 	}
 }
@@ -141,17 +173,22 @@ void Game::makeFruit()
 Game::Direction Game::readDirectionFromKeyboard() const
 {
 	Game::Direction moveNextTo = Direction::None;
+
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)
 		or sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Up))
 		moveNextTo = Direction::Up;
+
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)
 		or sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Down))
 		moveNextTo = Direction::Down;
+
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)
 		or sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Left))
 		moveNextTo = Direction::Left;
+
 	else if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)
 		or sf::Keyboard::isKeyPressed(sf::Keyboard::Key::Right))
 		moveNextTo = Direction::Right;
+
 	return moveNextTo;
 }	

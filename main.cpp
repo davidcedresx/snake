@@ -7,6 +7,10 @@ int main()
 	sf::RenderWindow window(sf::VideoMode(32*20, 32*20), "Snake");
 	window.setFramerateLimit(60);
 
+	sf::Font font;
+	if (!font.loadFromFile("font/8-BIT WONDER.TTF"))
+		throw -1;
+
 	float delay_factor = 20.f;
 
 	Game game;
@@ -22,7 +26,7 @@ int main()
 			delay_factor = (60.0f+delay_factor)/4.f;
 		}
 
-		game.draw(window);
+		game.draw(window, font);
 		window.display();
 		sf::sleep(sf::seconds(1.f/delay_factor));
 	}
