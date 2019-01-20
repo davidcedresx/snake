@@ -4,7 +4,7 @@
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(64*15, 32*15), "Snake");
+	sf::RenderWindow window(sf::VideoMode(32*20, 32*20), "Snake");
 	window.setFramerateLimit(60);
 
 	float delay_factor = 20.f;

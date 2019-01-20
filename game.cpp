@@ -9,12 +9,12 @@ Game::Game() :
 	m_snake()
 {
 	m_board.fill(Slot::Empty);
-	m_board[16*64+31] = Slot::Body;
-	m_board[16*64+32] = Slot::Body;
-	m_board[16*64+33] = Slot::Body;
-	m_snake.emplace_back(31, 16);
-	m_snake.emplace_back(32, 16);
-	m_snake.emplace_back(33, 16);
+	m_board[16*32+14] = Slot::Body;
+	m_board[16*32+15] = Slot::Body;
+	m_board[16*32+16] = Slot::Body;
+	m_snake.emplace_back(14, 16);
+	m_snake.emplace_back(15, 16);
+	m_snake.emplace_back(16, 16);
 	makeFruit();
 }
 
@@ -27,7 +27,7 @@ void Game::reset()
 bool Game::step()
 {
 
-	auto goesBackwards = [] (Direction a, Direction b)
+	auto wrongMove = [] (Direction a, Direction b)
 	{
 		return a == Direction::Up and b == Direction::Down 
 			or a == Direction::Down and b == Direction::Up
@@ -36,9 +36,7 @@ bool Game::step()
 	};
 
 	Direction new_direction = readDirectionFromKeyboard();
-	if (new_direction == Direction::None)
-		new_direction = m_direction;
-	else if (goesBackwards(new_direction, m_direction))
+	if (new_direction == Direction::None or wrongMove(new_direction, m_direction))
 		new_direction = m_direction;
 
 	unsigned x, y;
@@ -56,11 +54,11 @@ bool Game::step()
 		break;
 		case Direction::Left:
 		--x;
-		x %= 64;
+		x %= 32;
 		break;
 		case Direction::Right:
 		++x;
-		x %= 64;
+		x %= 32;
 		break;
 	}
 
@@ -71,7 +69,7 @@ bool Game::step()
 bool Game::moveSnake(unsigned x, unsigned y)
 {
 
-	switch(m_board[y*64+x])
+	switch(m_board[y*32+x])
 	{
 		case Slot::Body:
 		reset();
@@ -79,7 +77,7 @@ bool Game::moveSnake(unsigned x, unsigned y)
 
 		case Slot::Fruit:
 		m_snake.emplace_back(x, y);
-		m_board[y*64+x] = Slot::Body;
+		m_board[y*32+x] = Slot::Body;
 		makeFruit();
 		m_score += 10;
 		return true;
@@ -87,10 +85,10 @@ bool Game::moveSnake(unsigned x, unsigned y)
 
 		case Slot::Empty:
 		m_snake.emplace_back(x, y);
-		m_board[y*64+x] = Slot::Body;
+		m_board[y*32+x] = Slot::Body;
 
 		auto back = m_snake.front();
-		m_board[std::get<1>(back)*64 + std::get<0>(back)] = Slot::Empty;
+		m_board[std::get<1>(back)*32 + std::get<0>(back)] = Slot::Empty;
 		m_snake.erase(m_snake.begin());
 		break;
 	}
@@ -100,26 +98,26 @@ bool Game::moveSnake(unsigned x, unsigned y)
 void Game::draw(sf::RenderWindow & window)
 {
 	for (unsigned row = 0; row < 32; ++row)
-		for (unsigned col = 0; col < 64; ++col)
+		for (unsigned col = 0; col < 32; ++col)
 		{
 			sf::RectangleShape rectangle;
-			rectangle.setSize(sf::Vector2f(15, 15));
+			rectangle.setSize(sf::Vector2f(20, 20));
 
-			Slot slot = m_board[row*64+col];
+			Slot slot = m_board[row*32+col];
 			switch (slot)
 			{
 				case Slot::Empty:
-				rectangle.setFillColor(sf::Color::Black);
+				rectangle.setFillColor(sf::Color(52, 73, 94));
 				break;
 				case Slot::Body:
-				rectangle.setFillColor(sf::Color::White);
+				rectangle.setFillColor(sf::Color(46, 204, 113));
 				break;
 				case Slot::Fruit:
-				rectangle.setFillColor(sf::Color::Red);
+				rectangle.setFillColor(sf::Color(231, 76, 60));
 				break;
 			}
 
-			rectangle.setPosition(col*15, row*15);
+			rectangle.setPosition(col*20, row*20);
 			window.draw(rectangle);
 		}
 }
@@ -129,9 +127,9 @@ void Game::makeFruit()
 	bool set = false;
 	while (!set)
 	{
-		auto x = rand()%64;
+		auto x = rand()%32;
 		auto y = rand()%32;
-		Slot & slot = m_board[y*64+x];
+		Slot & slot = m_board[y*32+x];
 		if (slot == Slot::Empty)
 		{
 			slot = Slot::Fruit;
