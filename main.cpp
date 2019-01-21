@@ -4,14 +4,20 @@
 
 int main()
 {
-	sf::RenderWindow window(sf::VideoMode(32*20, 32*20), "Snake");
+	// window setup
+	sf::RenderWindow window(sf::VideoMode(16*24, 16*24), "Snake");
 	window.setFramerateLimit(60);
 
+	// font setup
 	sf::Font font;
 	if (!font.loadFromFile("font/8-BIT WONDER.TTF"))
 		throw -1;
 
-	float delay_factor = 20.f;
+	// difficulty settings
+	float difficulty = 0.f;
+	float fps_hard = 15.f;
+	float fps_easy =  10.f;
+	short snacks_to_go_pro = 10;
 
 	Game game;
 	while (window.isOpen())
@@ -23,12 +29,16 @@ int main()
 
 		if (game.step())
 		{
-			delay_factor = (60.0f+delay_factor)/4.f;
+			// increase difficulty
+			if (difficulty != 1.f)
+				difficulty += difficulty / snacks_to_go_pro;
 		}
 
 		game.draw(window, font);
 		window.display();
-		sf::sleep(sf::seconds(1.f/delay_factor));
+
+		float sleep_time = 1/((fps_hard-fps_easy)*difficulty+fps_easy);
+		sf::sleep(sf::seconds(sleep_time));
 	}
 
 	return 0;
